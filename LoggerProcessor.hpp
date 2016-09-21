@@ -6,12 +6,10 @@
 
 class LoggerProcessor : public QueueProcessor<std::string> {
 	public:
-		LoggerProcessor() : QueueProcessor() {
-			
-		}
+		LoggerProcessor(MTHREAD::Mutex& paramMutext) : QueueProcessor(paramMutext) {}
 		virtual ~LoggerProcessor(void) {}
 	protected:
-		void onProcess(int workerID, std::string const & data);
+		void onProcess(int workerID, const std::string & data);
 };
 
 #endif // !H_LOGGER_PROCESSOR

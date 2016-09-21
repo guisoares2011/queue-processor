@@ -1,7 +1,8 @@
 #include "LoggerProcessor.hpp"
 #include <iostream>
-
-void LoggerProcessor::onProcess(int workerID, const std::string & data)
+#include <Windows.h>
+void LoggerProcessor::onProcess(int workerID, const std::string& data)
 {
-	std::cout << "Proccessing : " << workerID << " : " << data << " ; " << std::endl;
+	//std::cout << workerID << " : " << data << " ; " << std::endl;
+	Sleep(2000);
 };

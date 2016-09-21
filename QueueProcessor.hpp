@@ -8,7 +8,8 @@
 #include <thread>
 #include <Windows.h>
 #include <queue>
-#include <mutex> 
+#include "ScopedLock.hpp"
+
 using namespace std;
 
 template <class T>
@@ -17,12 +18,12 @@ class QueueProcessor {
 		bool alive = 0;
 		std::vector<thread*> workers = {};
 		std::queue<T> queue;
-		std::mutex mtx;
+		MTHREAD::Mutex& mtx;
 		void createWorkers(int pool);
 	protected:
 		void virtual onProcess(int workerID, T const&) = 0;
 	public:
-		QueueProcessor() {};
+		QueueProcessor(MTHREAD::Mutex& paramMutex) : mtx(paramMutex) {};
 		~QueueProcessor() {
 			this->stop();
 			cout << "Finished!" << endl;
@@ -74,17 +75,19 @@ inline void QueueProcessor<T>::onPeek(int workerID)
 {
 	while (this->isAlive()) {
 		//cout << "Worker " << i << endl;
-		
-		if (!queue.empty()) {
-			mtx.lock();
-			T const& _tmp = queue.front();
-			queue.pop();
-			this->onProcess(workerID, _tmp);
-			mtx.unlock();
+		bool qEmpty;
+		{
+			MTHREAD::ScopedLock lk(mtx);
+			qEmpty = queue.empty();
 		}
-		
-
-		Sleep(10);
+		if(!qEmpty)
+		{	
+			mtx.lock();
+			const T&  _tmp = queue.front();
+			queue.pop();
+			mtx.unlock();
+			this->onProcess(workerID, _tmp);
+		}
 	}
 }
 #endif // !H_BROKER_MESSAGE

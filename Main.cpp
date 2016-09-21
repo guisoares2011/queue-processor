@@ -3,39 +3,34 @@
 #include <thread>
 #include <string>
 #include <windows.h>
-
+#include "Mutex.hpp"
 using namespace std;
 
 LoggerProcessor* broker;
-
-void createWorkers() {
-	broker->start(5);
-}
+MTHREAD::Mutex mtx;
 
 void addMessagesToQueue()
 {
-	for (DWORD i = 0; i < 10000000; i++) {
-		broker->push("Test");
-	}
-
+	mtx.lock();
+	for (DWORD i = 0; i < 1000000; i++) { broker->push("Test"); }
+	mtx.unlock();
 	while (!broker->empty()) {
 		Sleep(1);
 	}
+	std::cout << "FinishedDDDD!" << endl;
 	broker->stop();
 }
 
 
 int main() {
-	broker = new LoggerProcessor();
+	SYSTEM_INFO sysinfo;
+	GetSystemInfo(&sysinfo);
+	int numCPU = sysinfo.dwNumberOfProcessors;
+
+	broker = new LoggerProcessor(mtx);
 	//std::thread frist(createWorkers);
 	std::thread second(addMessagesToQueue);
-	// spawn new thread that calls foo()
-	  // spawn new thread that calls bar(0)
-
-	std::cout << "main, foo and bar now execute concurrently...\n";
-	broker->start(2);
+	broker->start(numCPU * 40);
 	second.join();
-
-	std::cout << "foo and bar completed.\n";
 	return 0;
 }
